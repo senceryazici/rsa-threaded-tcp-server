@@ -23,6 +23,7 @@ from server.socket_server_with_class import BasicChatServer
 import thread
 import serial
 import time
+from DataTypes.Types import *
 
 def callback(client, data):
     # print "[ INFO ] Message Received -> " + data
