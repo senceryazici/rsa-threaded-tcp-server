@@ -19,23 +19,25 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from server.socket_server_with_class import BasicChatServer
+from Server import BasicChatServer
 import thread
 import serial
 import time
 from DataTypes.Types import *
 
 def callback(client, data):
-    # print "[ INFO ] Message Received -> " + data
+    print "[ INFO ] Message Received from client:", client.id, "-> " + data
     pass
 
 def main():
     server = BasicChatServer(callback)
-    # port = establish_serial_connection()
     thread.start_new_thread(server.run, ())
+
     while server.ok():
         # Signal main thread to be opened.
-        time.sleep(10)
+        command = raw_input("-$")
+        if command == "exit":
+            server.shutdown()
 
 if __name__ == "__main__":
     main()
