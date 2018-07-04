@@ -5,6 +5,11 @@ class ConfirmationTypes:
         id:CLIENT_ID, type:CONNECTION_REFUSED"""
     CONNECTION_REFUSED = "CONNECTION_REFUSED"
 
+    """Sent by either server or client to reject previous request
+        id:CLIENT_ID, type:REJECTED, request:PREVIOUS_REQUEST"""
+    REJECTED = "REJECTED"
+
+
 class InfoTypes:
     """Information Types"""
 
@@ -27,6 +32,10 @@ class RequestTypes:
     """Sent by client to establish a connection.
         id:CLIENT_ID, type:CONNECTION_REQUEST"""
     CONNECTION_REQUEST = "CONNECTION_REQUEST"
+
+    """Sent by client to gather information about the active connections.
+        id:CLIENT_ID, type:SERVER_INFO_REQUEST"""
+    SERVER_INFO_REQUEST = "SERVER_INFO_REQUEST"
 
 class MessageTypes:
     """Text Message Types"""
