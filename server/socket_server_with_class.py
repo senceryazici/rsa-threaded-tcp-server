@@ -1,8 +1,33 @@
+# Copyright (c) 2017-2018 Sencer Yazici, https://github.com/senceryazici
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# The SocketServer and BasicChatServer Objects are constructed by Arbel Israeli on stackoverflow
+# You can find the original structure at this link.
+# https://stackoverflow.com/questions/17453212/multi-threaded-tcp-server-in-python?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+
 import socket
 import thread
 import time
 import json
-
+from DataTypes.Types import *
 
 class Client():
     def __init__(self):
@@ -71,14 +96,14 @@ class SocketServer(socket.socket):
             conn_req = json.loads(data)
             print "[ INFO ] Client sent message:", conn_req
 
-            if conn_req["type"] != "CONNECTION_REQUEST":
+            if conn_req["type"] != RequestTypes.CONNECTION_REQUEST:
                 print "[ INFO ] Client sent invalid message."
                 continue
             else:
                 if conn_req["id"] in self.blacklist:
                     conn_info = {
                         "id": conn_req["id"],
-                        "type":"CONNECTION_REFUSED"
+                        "type": ConfirmationTypes.CONNECTION_REFUSED
                     }
                     print "[ INFO ] ID:", conn_req["id"], "is banned."
                     client.socket.send(json.dumps(conn_info))
@@ -95,7 +120,7 @@ class SocketServer(socket.socket):
                         "timeout": self.client_timeout,
                         "id": client.id,
                         "rsa-public-key": "AAA",
-                        "type":"CONNECTION_INFO"
+                        "type": InfoTypes.CONNECTION_INFO
                     }
 
                     client.socket.send(json.dumps(conn_info))
@@ -106,8 +131,8 @@ class SocketServer(socket.socket):
     def recieve(self, client):
         connection = {
             "id": client.id,
-            "type": "CONNECTION_STATUS",
-            "status": True
+            "type": InfoTypes.CONNECTION_STATUS,
+            "content": True
         }
 
         client.log(json.dumps(connection))
@@ -124,8 +149,9 @@ class SocketServer(socket.socket):
                 client.new_msg(data)
                 data_dict = json.loads(data)
 
-                if data_dict["type"] == "CARRY_MESSAGE":
+                if data_dict["type"] == MessageTypes.CARRY_MESSAGE:
                     print "[ INFO ] Fowarding Message from:", data_dict["id"], "to", data_dict["to"]
+
                     for to in data_dict["to"]:
                         if str(to) in self.groups:
                             # Group fowarding algorithm
@@ -134,13 +160,12 @@ class SocketServer(socket.socket):
                                 "from": data_dict["id"],
                                 "to": str(to),
                                 "content": data_dict["content"],
-                                "type": "TEXT_MESSAGE"
+                                "type": MessageTypes.TEXT_MESSAGE
                             }
                             group = to
                             self.send_to_groups(json.dumps(msg), group)
-                        # else:
-                        #     target_clients = data_dict["to"]
-                        #     self.foward_message(data_dict, target_clients)
+                        else:
+                            self.foward_message(data_dict, to)
                 else:
                     self.onmessage(client, data)
 
@@ -151,8 +176,8 @@ class SocketServer(socket.socket):
 
         disconnection = {
             "id": client.id,
-            "type": "CONNECTION_STATUS",
-            "status": False
+            "type": InfoTypes.CONNECTION_STATUS,
+            "content": False
         }
 
         client.log(json.dumps(disconnection))
@@ -165,15 +190,16 @@ class SocketServer(socket.socket):
         #Closing thread
         thread.exit()
 
-    def foward_message(self, message_received, target_clients):
-        for cl in target_clients:
-            dict = {
-                "id": message_received["id"],
-                "from": "username_here",
-                "to": cl,
-                "content": message_received["content"]
-            }
-            self.send_to_client(cl, json.dumps(dict))
+    def foward_message(self, message_received, target_client):
+
+        dict = {
+            "id": message_received["id"],
+            "from": message_received["id"],
+            "to": target_client,
+            "content": message_received["content"],
+            "type": MessageTypes.TEXT_MESSAGE
+        }
+        self.send_to_client(target_client, json.dumps(dict))
 
     def send_to_client(self, client, message):
         # Sending message only to a client
@@ -257,7 +283,7 @@ class SocketServer(socket.socket):
     def active_connections(self):
         dict = {
             "clients": self.clients,
-            "type": "SERVER_INFO"
+            "type": InfoTypes.SERVER_INFO
         }
         return json.dumps(dict)
 
