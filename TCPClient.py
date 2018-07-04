@@ -58,12 +58,12 @@ elif connection_info["type"] == ConfirmationTypes.CONNECTION_REFUSED:
 
 foward_message = {
     "id":id,
-    "to": ["AAAAAAAA", "BBBBBBBB"],
-    "type":MessageTypes.CARRY_MESSAGE,
-    "content":"THIS IS A MESSAGE FOR AAAAAAA AND BBBBBBBB"
+    "type": RequestTypes.SERVER_INFO_REQUEST,
 }
 client.send(json.dumps(foward_message) + "\n")
+print client.recv(1024)
 time.sleep(1)
+
 def keep_alive(_client):
     dict = {
         "id":id,
@@ -71,6 +71,8 @@ def keep_alive(_client):
     }
     _client.send(json.dumps(dict) + '\n')
     return json.dumps(dict)
+
+
 
 while True:
     print "KEEP_ALIVE:", keep_alive(client)
