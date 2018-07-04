@@ -36,7 +36,8 @@ client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((host, port))
 
 # Request Connection
-_id = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+# _id = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+_id = raw_input("username:")
 conn_req = {
     "id": _id,
     "type":RequestTypes.CONNECTION_REQUEST
