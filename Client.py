@@ -23,6 +23,8 @@ import socket
 import time
 import json
 import thread
+import base64
+from Crypto.PublicKey import RSA
 from DataTypes.Types import *
 
 class SocketClient():
@@ -38,9 +40,9 @@ class SocketClient():
         self.timeout = 0
         self.keep_alive_flag = False
 
-    def send(self, msg):
-        # TODO: RSA encryption process here.
-        self.socket.send(msg)
+    def send_encrypted(self, msg):
+        encrypted = self.server_public_key.encrypt(msg, 256)[0]
+        self.socket.send(encrypted)
 
     def receive(self):
         while self.listen:
@@ -55,7 +57,7 @@ class SocketClient():
                 "id": self.id,
                 "type": TcpTypes.KEEP_ALIVE
             }
-            self.socket.send(json.dumps(dict) + '\n')
+            self.send_encrypted(json.dumps(dict) + '\n')
             time.sleep(self.timeout / 2)
         print "[ INFO ] Stopped Keep Alive Process."
 
@@ -78,7 +80,7 @@ class SocketClient():
             self.socket.settimeout(connection_info["timeout"])
             self.timeout = connection_info["timeout"]
             self.id = connection_info["id"]
-            self.server_public_key = connection_info["rsa-public-key"]
+            self.server_public_key = RSA.importKey(connection_info["rsa-public-key"])
             self.listen = True
             self.keep_alive_flag = True
 
@@ -103,7 +105,7 @@ class SocketClient():
                 "type": type,
                 "content": message
             }
-            self.socket.send(json.dumps(msg) + "\n")
+            self.send_encrypted(json.dumps(msg) + "\n")
             return True
         except Exception as e:
             print "[ EXCEPTION ]", e
@@ -122,7 +124,7 @@ class SocketClient():
                 "id": self.id,
                 "type": request_type
             }
-            self.socket.send(json.dumps(dict) + "\n")
+            self.send_encrypted(json.dumps(dict) + "\n")
             return self.socket.recv(2048)
         except Exception as e:
             print "[ EXCEPTION ]", e
