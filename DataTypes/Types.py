@@ -33,21 +33,26 @@ class RequestTypes:
         id:CLIENT_ID, type:CONNECTION_REQUEST"""
     CONNECTION_REQUEST = "CONNECTION_REQUEST"
 
+    """Sent by client to terminate connection.
+        id:CLIENT_ID, type:DISCONNECTION_REQUEST"""
+    DISCONNECTION_REQUEST = "DISCONNECTION_REQUEST"
+
     """Sent by client to gather information about the active connections.
         id:CLIENT_ID, type:SERVER_INFO_REQUEST"""
     SERVER_INFO_REQUEST = "SERVER_INFO_REQUEST"
 
 class MessageTypes:
-    """Text Message Types"""
+    """Text Message Types. Usage:
+    Client sends CARRY_MESSAGE to the server, and server fowards the message as TEXT_MESSAGE."""
 
     """Sent by client to foward the message to another client
         id:CLIENT_ID, to:string_array_of_client_id, content:MESSAGE, type:CARRY_MESSAGE"""
     CARRY_MESSAGE = "CARRY_MESSAGE"
 
-    """Sent by either server or client, to a client or to the server.
+    """Sent by server, to a client.
         id/from:CLIENT_ID/SENDER_ID, to:string_array_of_client_id, content:MESSAGE, type:TEXT_MESSAGE"""
     TEXT_MESSAGE = "TEXT_MESSAGE"
-
+    
 class TcpTypes:
     """TCP Communication Message Types"""
 
