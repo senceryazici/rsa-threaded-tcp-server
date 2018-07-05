@@ -26,7 +26,6 @@ import thread
 from DataTypes.Types import *
 
 class SocketClient():
-
     def __init__(self, host, port, id, callback=None):
         self.host = host
         self.port = port
@@ -39,11 +38,15 @@ class SocketClient():
         self.timeout = 0
         self.keep_alive_flag = False
 
+    def send(self, msg):
+        # TODO: RSA encryption process here.
+        self.socket.send(msg)
+
     def receive(self):
         while self.listen:
             message_received = self.socket.recv(2048)
             self.on_received(message_received)
-            print message_received
+            print "[ INFO ]", "Received Message:", message_received
         thread.exit()
 
     def keep_alive(self):
@@ -63,12 +66,12 @@ class SocketClient():
             "id": self.id,
             "type": RequestTypes.CONNECTION_REQUEST
         }
-        print "sending", json.dumps(conn_req)
+        print "[ INFO ]", "Sending", json.dumps(conn_req)
         self.socket.send(json.dumps(conn_req) + "\n")
 
         # Receive Status
         json_str = self.socket.recv(1024)
-        print "Received Connection Info: ", json_str
+        print "[ INFO ]", "Received Connection Info: ", json_str
         connection_info = json.loads(json_str)
 
         if connection_info["type"] == InfoTypes.CONNECTION_INFO:
@@ -83,13 +86,44 @@ class SocketClient():
             thread.start_new_thread(self.keep_alive, ())
 
         elif connection_info["type"] == ConfirmationTypes.CONNECTION_REFUSED:
-            print "Server Refused Connection."
+            print "[ WARN ] Server Refused Connection."
 
+    def send_message(self, message, to="@all", type=MessageTypes.CARRY_MESSAGE):
+        to_array = []
+        if isinstance(to, str):
+            to_array.append(to)
+        else:
+            for elem in to:
+                to_array.append(elem)
+
+        try:
+            msg = {
+                "id": self.id,
+                "to": to_array,
+                "type": type,
+                "content": message
+            }
+            self.socket.send(json.dumps(msg) + "\n")
+            return True
+        except Exception as e:
+            print "[ EXCEPTION ]", e
+            print "[ ERROR ]", "Message", message, "failed to send."
+            return False
+
+    def terminate_connection(self):
+        disconn_req ={
+            "id": self.id,
+            "type": RequestTypes.DISCONNECTION_REQUEST
+        }
 
     def request(self, request_type):
-        dict = {
-            "id": self.id,
-            "type": request_type
-        }
-        self.socket.send(json.dumps(dict) + "\n")
-        return self.socket.recv(2048)
+        try:
+            dict = {
+                "id": self.id,
+                "type": request_type
+            }
+            self.socket.send(json.dumps(dict) + "\n")
+            return self.socket.recv(2048)
+        except Exception as e:
+            print "[ EXCEPTION ]", e
+            print "[ ERROR ]", "Request", request_type, "failed to send."
