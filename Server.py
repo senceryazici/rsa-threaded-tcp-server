@@ -27,6 +27,9 @@ import socket
 import thread
 import time
 import json
+import base64
+from Crypto.PublicKey import RSA
+from Crypto import Random
 from DataTypes.Types import *
 
 
@@ -65,6 +68,10 @@ class SocketServer(socket.socket):
         self.allow_new_connections = True
         self.groups = ["@all", "@todo"]
         self.shuttingdown = False
+
+        random_generator = Random.new().read
+        self.private_key = RSA.generate(1024, random_generator)
+        self.public_key = self.private_key.publickey()
 
     def ok(self):
         return self.status
@@ -132,7 +139,7 @@ class SocketServer(socket.socket):
                     conn_info = {
                         "timeout": self.client_timeout,
                         "id": client.id,
-                        "rsa-public-key": "AAA",
+                        "rsa-public-key": self.public_key.exportKey(),
                         "type": InfoTypes.CONNECTION_INFO
                     }
 
@@ -156,6 +163,15 @@ class SocketServer(socket.socket):
                 if data == '':
                     break
                 #Message Received
+                print "[ INFO ]", "Begin Decryption"
+                print data
+                try:
+                    data = self.private_key.decrypt(data)
+                    print "[ OK ]", "Decryption Succesfull"
+                except Exception as e:
+                    print "[ EXCEPTION ]", e
+                    print "[ ERROR ]", "Decryption failed."
+                print data
                 data = data.replace("\r\n", "")
                 data = data.replace("\n", "")
                 data = data.replace("\r", "")
@@ -195,6 +211,7 @@ class SocketServer(socket.socket):
                     # Exit while loop
                     break
                 else:
+                    print data
                     self.onmessage(client, data)
                 # *** MAIN MESSAGE GROUPING *** #
 
