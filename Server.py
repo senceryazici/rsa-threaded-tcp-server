@@ -92,6 +92,8 @@ class SocketServer(socket.socket):
             client.socket.close()
         self.close()
         thread.exit()
+
+
     def accept_clients(self):
         while self.allow_new_connections:
             (clientsocket, address) = self.accept()
@@ -189,6 +191,9 @@ class SocketServer(socket.socket):
 
                 elif data_dict["type"] == TcpTypes.KEEP_ALIVE:
                     pass
+                elif data_dict["type"] == RequestTypes.DISCONNECTION_REQUEST:
+                    # Exit while loop
+                    break
                 else:
                     self.onmessage(client, data)
                 # *** MAIN MESSAGE GROUPING *** #
@@ -198,12 +203,12 @@ class SocketServer(socket.socket):
                 print "[ INFO ] Timeout reached, Client:", client.id, "disconnecting"
 
 
+        # Disconnection Stage
         disconnection = {
             "id": client.id,
             "type": InfoTypes.CONNECTION_STATUS,
             "content": False
         }
-
         client.log(json.dumps(disconnection))
         #Removing client from clients list
         self.clients.remove(client)
