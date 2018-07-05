@@ -23,59 +23,21 @@ import socket
 import time
 import json
 from DataTypes.Types import *
-
-loop_rate = 1000
+from Client import SocketClient
 
 host = "0.0.0.0"
 port = 9090
 
-
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-client.connect((host, port))
-
-# Request Connection
-conn_req = {
-    "id":"AAAACCCC",
-    "type": RequestTypes.CONNECTION_REQUEST
-}
-print "sending",json.dumps(conn_req)
-client.send(json.dumps(conn_req) + "\n")
-
-# Receive Status
-json_str = client.recv(1024)
-print "Received Board Info: ", json_str
-connection_info = json.loads(json_str)
-
-if connection_info["type"] == InfoTypes.CONNECTION_INFO:
-    client.settimeout(connection_info["timeout"])
-    id = connection_info["id"]
-    # client.id = connection_info["ID"]
-    server_public_key = connection_info["rsa-public-key"]
-elif connection_info["type"] == ConfirmationTypes.CONNECTION_REFUSED:
-    print "WOW"
+def callback(data):
     pass
 
-foward_message = {
-    "id":id,
-    "type": RequestTypes.SERVER_INFO_REQUEST,
-}
-client.send(json.dumps(foward_message) + "\n")
-print client.recv(1024)
-time.sleep(1)
+client = SocketClient(host, port, "senceryazici", callback)
+client.establish_connection()
 
-def keep_alive(_client):
-    dict = {
-        "id":id,
-        "type":TcpTypes.KEEP_ALIVE
-    }
-    _client.send(json.dumps(dict) + '\n')
-    return json.dumps(dict)
-
-
-
+# These 2 functions are called as threaded in establish_connection().
+# client.keep_alive()
+# client.receive()
 while True:
-    print "KEEP_ALIVE:", keep_alive(client)
-    time.sleep(2)
-time.sleep(1000)
-client.close()
+    # Keep main thread alive
+    client.send_message(raw_input("?"), to=["@all"])
+    time.sleep(1)
