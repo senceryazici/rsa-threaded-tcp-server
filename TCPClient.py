@@ -39,5 +39,10 @@ client.establish_connection()
 # client.receive()
 while True:
     # Keep main thread alive
-    client.send_message(raw_input("?"), to=["@all"])
+    dict = {
+        "type": "None",
+        "id":client.id,
+        "content":raw_input()
+    }
+    client.send_encrypted(json.dumps(dict))
     time.sleep(1)
