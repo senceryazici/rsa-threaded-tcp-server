@@ -41,6 +41,10 @@ class SocketClient():
         self.keep_alive_flag = False
 
     def send_encrypted(self, msg):
+        _dict = json.loads(msg)
+        _dict["time"] = time.time()
+        msg = json.dumps(_dict)
+        print "[ INFO ]", "Time Stamp Added."
         encrypted = self.server_public_key.encrypt(msg, 256)[0]
         self.socket.send(encrypted)
 
@@ -73,6 +77,7 @@ class SocketClient():
 
         # Receive Status
         json_str = self.socket.recv(1024)
+        print "[ OK ]", "Socket Handshake."
         print "[ INFO ]", "Received Connection Info: ", json_str
         connection_info = json.loads(json_str)
 
@@ -85,7 +90,7 @@ class SocketClient():
             self.keep_alive_flag = True
 
             thread.start_new_thread(self.receive, ())
-            thread.start_new_thread(self.keep_alive, ())
+            # thread.start_new_thread(self.keep_alive, ())
 
         elif connection_info["type"] == ConfirmationTypes.CONNECTION_REFUSED:
             print "[ WARN ] Server Refused Connection."
