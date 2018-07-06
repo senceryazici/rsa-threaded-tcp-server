@@ -31,7 +31,7 @@ port = 9090
 def callback(data):
     pass
 
-client = SocketClient(host, port, "senceryazici", callback)
+client = SocketClient(host, port, raw_input("username\n"), callback)
 client.establish_connection()
 
 # These 2 functions are called as threaded in establish_connection().
@@ -41,8 +41,8 @@ while True:
     # Keep main thread alive
     dict = {
         "type": "None",
-        "id":client.id,
-        "content":raw_input()
+        "id": client.id,
+        "content": "TEST-MESSAGE"
     }
     client.send_encrypted(json.dumps(dict))
-    time.sleep(1)
+    time.sleep(0.01)
