@@ -39,13 +39,28 @@ class Client(object):
         self.id = None
         self.banned = False
         self.messages = []
+        self.max_msgs = 1000
         # Every connected client joins all group.
         self.groups = ["@all"]
+        self.avg_delay_ms = 0
+        self.begin_time = time.time()
 
     def info(self):
         print "Client", self.socket, "ID:", self.id
 
     def new_msg(self, msg):
+        if len(self.messages) > self.max_msgs:
+            # empty memory
+            self.messages = []
+
+        _dict = json.loads(msg)
+        _dict["time-received"] = time.time()
+        _dict["message-delay-ms"] = (_dict["time-received"] - _dict["time"]) * 1000
+        self.avg_delay_ms = ((self.avg_delay_ms * len(self.messages)) + _dict["message-delay-ms"]) / (len(self.messages) + 1)
+        print "[ INFO ]", _dict["message-delay-ms"], "ms delay. Client id:", self.id
+        print "[ INFO ]", "Avg delay:", self.avg_delay_ms, "ms."
+
+        msg = json.dumps(_dict)
         self.messages.append(msg)
         self.log(msg)
 
@@ -72,6 +87,16 @@ class SocketServer(socket.socket):
         random_generator = Random.new().read
         self.private_key = RSA.generate(1024, random_generator)
         self.public_key = self.private_key.publickey()
+
+    def log(self, msg):
+        _time = str(time.ctime()).split(" ")
+        time_arr = []
+        time_arr.append(_time[1])
+        time_arr.append(_time[3])
+        time_arr.append(_time[5])
+        file = open("ServerLogs/" + "-".join(time_arr) + ".log", 'a+')
+        file.write(str(time.time()) + ": " + msg + "\n")
+        file.close()
 
     def ok(self):
         return self.status
@@ -168,9 +193,15 @@ class SocketServer(socket.socket):
                 try:
                     data = self.private_key.decrypt(data)
                     print "[ OK ]", "Decryption Succesfull"
+                    ok_msg = {
+                        "type": MessageTypes.MESSAGE_OK
+                    }
+                    # client.socket.send(json.dumps(ok_msg) + "\n")
                 except Exception as e:
                     print "[ EXCEPTION ]", e
                     print "[ ERROR ]", "Decryption failed."
+                    self.log("Decryption Failed. " + client.id + " " + str(e))
+                    continue
                 print data
                 data = data.replace("\r\n", "")
                 data = data.replace("\n", "")
@@ -224,7 +255,9 @@ class SocketServer(socket.socket):
         disconnection = {
             "id": client.id,
             "type": InfoTypes.CONNECTION_STATUS,
-            "content": False
+            "content": False,
+            "avg-delay-ms": client.avg_delay_ms,
+            "duration": time.time() - client.begin_time
         }
         client.log(json.dumps(disconnection))
         #Removing client from clients list
