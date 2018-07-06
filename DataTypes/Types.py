@@ -52,7 +52,10 @@ class MessageTypes:
     """Sent by server, to a client.
         id/from:CLIENT_ID/SENDER_ID, to:string_array_of_client_id, content:MESSAGE, type:TEXT_MESSAGE"""
     TEXT_MESSAGE = "TEXT_MESSAGE"
-    
+
+    """Sent by server to confirm message was received and decrypted succesfully."""
+    MESSAGE_OK = "MESSAGE_OK"
+
 class TcpTypes:
     """TCP Communication Message Types"""
 
